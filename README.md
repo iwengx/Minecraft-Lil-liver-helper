@@ -1,2 +1,2 @@
-# minecraft-small-liver-assistant
-我的世界小肝助手（wengx.cn）
+## 我的世界小肝助手（wengx.cn）
+QQ交流群：955907864
