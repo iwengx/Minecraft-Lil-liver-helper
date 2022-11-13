@@ -21,9 +21,12 @@
  
 ## 使用教程
 
-建议看一下官网的视频教程：[传送门](http://wengx.cn/#/lil-liver-helper)
- 
+该软件使用 `C# WPF` 框架开发，需要系统安装有 `.net framework 4.0` 环境，[前往下载](https://www.microsoft.com/de-de/download/details.aspx?id=17718)。
 
+一般去情况下，`Windows 10` 系统自带有该环境，双击打开软件即可。
+
+软件的具体使用，建议看一下官网的视频教程：[传送门](http://wengx.cn/#/lil-liver-helper)
+ 
 ## 温馨提示
 
 该软件为本人编写并分享，并没有经过安全软件的认证。如果您电脑上有安全管家之类的软件，大概率是会提示该软件为病毒等...
