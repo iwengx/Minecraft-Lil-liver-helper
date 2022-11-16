@@ -19,7 +19,7 @@
 
 - 前往[官网](http://wengx.cn)进行下载。
  
-- 下载当前仓库中的 `minecraft-lil-liver-helper.exe` 文件。
+- 前往当前仓库中的 [Releases](https://github.com/wengx-unx/Minecraft-Lil-liver-helper/releases) 进行下载。
  
 ## 使用教程
 
