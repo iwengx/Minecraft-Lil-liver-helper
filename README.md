@@ -25,7 +25,7 @@
 
 该软件使用 `C# WPF` 框架开发，需要系统安装有 `.NET Framework 4.5.2` 环境，[前往下载](https://www.microsoft.com/zh-cn/download/details.aspx?id=42642)。
 
-一般去情况下，`Windows 10` 系统自带有该环境，双击打开软件即可。
+一般情况下，`Windows 10` 系统自带有该环境，双击打开软件即可。
 
 软件的具体使用，建议看一下官网的视频教程：[传送门](http://wengx.cn/#/lil-liver-helper)
  
