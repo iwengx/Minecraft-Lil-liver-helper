@@ -32,3 +32,6 @@
 ## 温馨提示
 
 该软件为本人编写并分享，并没有经过安全软件的认证。如果您电脑上有安全管家之类的软件，大概率是会提示该软件为病毒等...
+
+## 感谢 Star 支持
+[![Stargazers repo roster for @iwengx/Minecraft-Lil-liver-helper](https://reporoster.com/stars/notext/iwengx/Minecraft-Lil-liver-helper)](https://github.com/iwengx/Minecraft-Lil-liver-helper/stargazers)
