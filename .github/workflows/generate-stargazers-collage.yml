@@ -125,11 +125,29 @@ jobs:
             -background none \
             images/stargazers.png
 
+          if [ ! -f images/stargazers.png ]; then
+            echo "images/stargazers.png was not generated"
+            ls -la
+            ls -la images || true
+            exit 1
+          fi
+
+          echo "Generated file details:"
+          ls -lh images/stargazers.png
+
           echo "Generated collage: ${COLS} cols, ${ROWS} rows, ${COUNT} avatars"
 
       - name: Commit and push if changed
         run: |
-          if git diff --quiet -- images/stargazers.png; then
+          echo "Git status before commit:"
+          git status --short
+
+          if [ ! -f images/stargazers.png ]; then
+            echo "images/stargazers.png does not exist, aborting commit step"
+            exit 1
+          fi
+
+          if [ -z "$(git status --porcelain -- images/stargazers.png)" ]; then
             echo "No changes to commit"
             exit 0
           fi
