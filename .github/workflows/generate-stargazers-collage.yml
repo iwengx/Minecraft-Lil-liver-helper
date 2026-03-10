@@ -22,6 +22,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq imagemagick
+
       - name: Fetch stargazers & download avatars
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,6 +74,15 @@ jobs:
         run: |
           set -euo pipefail
 
+          if command -v magick >/dev/null 2>&1; then
+            IM="magick"
+          elif command -v convert >/dev/null 2>&1; then
+            IM="convert"
+          else
+            echo "ImageMagick command not found"
+            exit 1
+          fi
+
           FILES=(/tmp/avatars/*.png)
           COUNT=${#FILES[@]}
 
@@ -83,20 +97,29 @@ jobs:
             NAME=$(basename "$f")
             # 4x 超采样圆形遮罩
             BIG=$((TILE * 4))
-            convert -size "${BIG}x${BIG}" xc:none \
+            "$IM" -size "${BIG}x${BIG}" xc:none \
               -fill white -draw "circle $((BIG/2)),$((BIG/2)) $((BIG/2)),0" \
               -resize "${TILE}x${TILE}" \
               /tmp/circle_mask.png
 
-            convert "$f" -resize "${TILE}x${TILE}^" -gravity center -extent "${TILE}x${TILE}" \
+            "$IM" "$f" -resize "${TILE}x${TILE}^" -gravity center -extent "${TILE}x${TILE}" \
               /tmp/circle_mask.png -compose CopyOpacity -composite \
               "/tmp/circles/${NAME}"
           done
 
-          # 使用 montage 拼成网格，透明背景
+          # 使用 montage 或 magick montage 拼成网格，透明背景
           ROWS=$(( (COUNT + COLS - 1) / COLS ))
 
-          montage /tmp/circles/*.png \
+          if command -v magick >/dev/null 2>&1; then
+            MONTAGE=(magick montage)
+          elif command -v montage >/dev/null 2>&1; then
+            MONTAGE=(montage)
+          else
+            echo "montage command not found"
+            exit 1
+          fi
+
+          "${MONTAGE[@]}" /tmp/circles/*.png \
             -tile "${COLS}x" \
             -geometry "${TILE}x${TILE}+${GAP}+${GAP}" \
             -background none \
