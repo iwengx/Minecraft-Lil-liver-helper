@@ -1,0 +1,118 @@
+name: Generate Stargazers Collage
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 16 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    env:
+      COLS: 8
+      TILE: 80
+      GAP: 8
+      MAX_STARGAZERS: 300
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch stargazers & download avatars
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/avatars
+
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          REPO="${GITHUB_REPOSITORY##*/}"
+
+          PAGE=1
+          INDEX=0
+
+          # 使用 star+json 媒体类型获取 starred_at，按时间倒序
+          while [ "$INDEX" -lt "$MAX_STARGAZERS" ]; do
+            RESPONSE=$(curl -sf \
+              -H "Accept: application/vnd.github.star+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              "https://api.github.com/repos/${OWNER}/${REPO}/stargazers?per_page=100&page=${PAGE}")
+
+            COUNT=$(echo "$RESPONSE" | jq length)
+            if [ "$COUNT" -eq 0 ]; then
+              break
+            fi
+
+            # 按 starred_at 倒序排列
+            SORTED=$(echo "$RESPONSE" | jq -r 'sort_by(.starred_at) | reverse | .[].user.avatar_url')
+
+            for AVATAR_URL in $SORTED; do
+              if [ "$INDEX" -ge "$MAX_STARGAZERS" ]; then
+                break
+              fi
+              PADDED=$(printf "%04d" "$INDEX")
+              curl -sfL "${AVATAR_URL}&s=${TILE}" -o "/tmp/avatars/${PADDED}.png" || true
+              INDEX=$((INDEX + 1))
+            done
+
+            PAGE=$((PAGE + 1))
+          done
+
+          echo "Downloaded $INDEX avatars"
+
+      - name: Generate collage with ImageMagick
+        run: |
+          set -euo pipefail
+
+          FILES=(/tmp/avatars/*.png)
+          COUNT=${#FILES[@]}
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "No avatars found, skipping."
+            exit 0
+          fi
+
+          # 将每张头像裁成圆形（透明背景 + 抗锯齿）
+          mkdir -p /tmp/circles
+          for f in "${FILES[@]}"; do
+            NAME=$(basename "$f")
+            # 4x 超采样圆形遮罩
+            BIG=$((TILE * 4))
+            convert -size "${BIG}x${BIG}" xc:none \
+              -fill white -draw "circle $((BIG/2)),$((BIG/2)) $((BIG/2)),0" \
+              -resize "${TILE}x${TILE}" \
+              /tmp/circle_mask.png
+
+            convert "$f" -resize "${TILE}x${TILE}^" -gravity center -extent "${TILE}x${TILE}" \
+              /tmp/circle_mask.png -compose CopyOpacity -composite \
+              "/tmp/circles/${NAME}"
+          done
+
+          # 使用 montage 拼成网格，透明背景
+          ROWS=$(( (COUNT + COLS - 1) / COLS ))
+
+          montage /tmp/circles/*.png \
+            -tile "${COLS}x" \
+            -geometry "${TILE}x${TILE}+${GAP}+${GAP}" \
+            -background none \
+            images/stargazers.png
+
+          echo "Generated collage: ${COLS} cols, ${ROWS} rows, ${COUNT} avatars"
+
+      - name: Commit and push if changed
+        run: |
+          if git diff --quiet -- images/stargazers.png; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add images/stargazers.png
+          git commit -m "chore: update stargazers collage"
+          git push
