@@ -17,17 +17,25 @@
 
 ## 下载
 
-- 前往[官网](http://wengx.cn)进行下载。
+- 前往 [官网](http://wengx.cn) 进行下载
 
-- 前往当前仓库中的 [Releases](https://github.com/wengx-unx/Minecraft-Lil-liver-helper/releases) 进行下载。
+- 前往当前仓库中的 [Releases](https://github.com/wengx-unx/Minecraft-Lil-liver-helper/releases) 进行下载
+
+## 运行环境
+
+该软件使用 `C# WPF` 框架开发，需要系统安装有 `.NET Framework 4.5.2` 环境，[前往下载](https://www.microsoft.com/zh-cn/download/details.aspx?id=42642)
+
+一般情况下，`Windows 10` 及以上系统自带有该环境，双击打开软件即可
 
 ## 使用教程
 
-该软件使用 `C# WPF` 框架开发，需要系统安装有 `.NET Framework 4.5.2` 环境，[前往下载](https://www.microsoft.com/zh-cn/download/details.aspx?id=42642)。
+- 进入游戏后，按下快捷键 <kbd>F3</kbd> + <kbd>P</kbd>，聊天框中显示 `[调试]: 失去焦点时暂停:停用`
 
-一般情况下，`Windows 10` 系统自带有该环境，双击打开软件即可。
+- 到小肝助手的 `设置` 栏目中，选择游戏进程（默认情况下会自动选择名为 `javaw` 的游戏进程）
 
-软件的具体使用，建议看一下官网的视频教程：[传送门](http://wengx.cn/#/lil-liver-helper)
+- 切换到 `脚本` 栏目，选择将要启动的脚本功能（钓鱼、鼠标、消息），按下快捷键 <kbd>F9</kbd> 启动脚本
+
+视频教程可加QQ群获取
 
 ## 温馨提示
 
