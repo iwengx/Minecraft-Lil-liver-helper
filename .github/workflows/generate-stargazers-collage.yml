@@ -29,81 +29,42 @@ jobs:
 
       - name: Fetch stargazers & download avatars
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.STARGAZERS_TOKEN }}
         run: |
           set -euo pipefail
           mkdir -p /tmp/avatars
-        
-          OWNER="${GITHUB_REPOSITORY%%/*}"
-          REPO="${GITHUB_REPOSITORY##*/}"
-        
+
           PAGE=1
           INDEX=0
-        
-          if [ -z "${GH_TOKEN:-}" ]; then
-            echo "Warning: GH_TOKEN is empty. Requests will be unauthenticated and heavily rate-limited."
-          fi
-        
-          # 循环分页获取 stargazers（每页 100），最多 MAX_STARGAZERS 个
+
+          # 使用 star+json 媒体类型获取 starred_at，按时间倒序
           while [ "$INDEX" -lt "$MAX_STARGAZERS" ]; do
-            URL="https://api.github.com/repos/${OWNER}/${REPO}/stargazers?per_page=100&page=${PAGE}"
-            # 构建头部
-            HDRS=(-H "Accept: application/vnd.github.star+json" -H "X-GitHub-Api-Version: 2022-11-28")
-            if [ -n "${GH_TOKEN:-}" ]; then
-              HDRS+=(-H "Authorization: Bearer ${GH_TOKEN}")
-            fi
-        
-            # 发起请求，捕获 body 并在末尾追加 http code
-            HTTP_OUTPUT=$(curl -sS "${HDRS[@]}" -w "\n%{http_code}" "$URL" || true)
-            HTTP_STATUS=$(echo "$HTTP_OUTPUT" | tail -n1)
-            RESPONSE=$(echo "$HTTP_OUTPUT" | sed '$d')
-        
-            if [ -z "$HTTP_STATUS" ]; then
-              echo "Failed to contact GitHub API (curl network error). Retrying..."
-              sleep 5
-              continue
-            fi
-        
-            # 处理常见状态码
-            if [ "$HTTP_STATUS" -ge 500 ]; then
-              echo "GitHub API server error (HTTP $HTTP_STATUS). Backing off and retrying..."
-              sleep 5
-              continue
-            fi
-        
-            if [ "$HTTP_STATUS" -eq 401 ] || [ "$HTTP_STATUS" -eq 403 ]; then
-              echo "GitHub API returned HTTP $HTTP_STATUS. Possible authentication/permission/rate-limit issue."
-              echo "Response body (truncated):"
-              echo "$RESPONSE" | jq -C '.' || echo "$RESPONSE"
-              echo "Aborting to avoid repeated failures — check GH_TOKEN and token permissions or rate limits."
-              exit 1
-            fi
-        
-            if [ "$HTTP_STATUS" -eq 404 ]; then
-              echo "Repository not found (HTTP 404): ${OWNER}/${REPO}. Aborting."
-              exit 1
-            fi
-        
-            # 解析结果数量；jq 出错时返回 0
-            COUNT=$(echo "$RESPONSE" | jq 'length' 2>/dev/null || echo "0")
+            RESPONSE=$(curl -L \
+              -H "Accept: application/vnd.github.star+json" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "X-GitHub-Api-Version: 2026-03-10" \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/stargazers?per_page=100&page=${PAGE}")
+
+            COUNT=$(echo "$RESPONSE" | jq length)
             if [ "$COUNT" -eq 0 ]; then
               break
             fi
-        
+
+            # 按 starred_at 倒序排列
             SORTED=$(echo "$RESPONSE" | jq -r 'sort_by(.starred_at) | reverse | .[].user.avatar_url')
+
             for AVATAR_URL in $SORTED; do
               if [ "$INDEX" -ge "$MAX_STARGAZERS" ]; then
                 break
               fi
               PADDED=$(printf "%04d" "$INDEX")
-              # 下载头像，单张失败不影响整体（保留 || true）
               curl -sfL "${AVATAR_URL}&s=${TILE}" -o "/tmp/avatars/${PADDED}.png" || true
               INDEX=$((INDEX + 1))
             done
-        
+
             PAGE=$((PAGE + 1))
           done
-        
+
           echo "Downloaded $INDEX avatars"
 
       - name: Generate collage with ImageMagick
