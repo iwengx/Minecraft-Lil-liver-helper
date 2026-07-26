@@ -45,6 +45,8 @@ jobs:
               -H "X-GitHub-Api-Version: 2026-03-10" \
               "https://api.github.com/repos/$GITHUB_REPOSITORY/stargazers?per_page=100&page=${PAGE}")
 
+            echo "$RESPONSE" | jq .
+
             COUNT=$(echo "$RESPONSE" | jq length)
             if [ "$COUNT" -eq 0 ]; then
               break
